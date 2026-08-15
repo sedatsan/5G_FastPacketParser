@@ -3,10 +3,12 @@ project(5G_FastPacketParser CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_executable(parser
 src/main.cpp
 src/MemoryMappedFile.cpp
+src/MacParser.cpp
 )
 
-target_include_directories(parser PRIVATE include)
+target_include_directories(parser PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
