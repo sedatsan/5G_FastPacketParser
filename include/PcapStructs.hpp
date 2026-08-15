@@ -1,4 +1,4 @@
-// PcapGlobalHeader.hpp
+// PcapStructs.hpp
 #pragma once
 
 #include <cstdint>
@@ -17,4 +17,9 @@ struct __attribute__((__packed__)) PcapRecordHeader {
   uint32_t timestamp_usec;
   uint32_t captured_len;
   uint32_t origin_len;
+};
+
+struct __attribute__((__packed__)) WiresharkTlvHeader {
+  uint16_t tag;
+  uint16_t length;
 };

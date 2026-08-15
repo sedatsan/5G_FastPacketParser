@@ -13,5 +13,6 @@ public:
 private:
   std::span<const uint8_t> m_data;
 
-  void process_payload(std::span<const uint8_t> payload) const;
+  void process_payload(const uint8_t *payload_start,
+                       uint32_t payload_size) const;
 };
