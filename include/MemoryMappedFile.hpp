@@ -1,3 +1,6 @@
+// MemoryMappedFile.hpp
+#pragma once
+
 #include <cstdint>
 #include <filesystem>
 #include <span>
