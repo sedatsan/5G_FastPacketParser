@@ -1,0 +1,59 @@
+name: C++23 5G Fast Packet Parser CI
+
+    on:
+      push:
+        branches: [ main, master ]
+      pull_request:
+        branches: [ main, master ]
+
+    jobs:
+      build_and_test:
+        name: ${{ matrix.name }}
+        runs-on: ubuntu-24.04
+        strategy:
+          fail-fast: false
+          matrix:
+            include:
+              # Job 1: GCC 14 with Debug & Sanitizers (ASan + UBSan)
+              - name: GCC 14 (ASan + UBSan)
+                c_compiler: gcc-14
+                cxx_compiler: g++-14
+                build_type: Debug
+                extra_flags: "-fsanitize=address,undefined -fno-omit-frame-pointer"
+
+              # Job 2: Clang 18 Release Build
+              - name: Clang 18 (Release)
+                c_compiler: clang-18
+                cxx_compiler: clang++-18
+                build_type: Release
+                extra_flags: "-O3"
+
+        steps:
+          - name: Checkout Code
+            uses: actions/checkout@v4
+
+          - name: Install Compilers and Tools
+            run: |
+              sudo apt-get update
+              sudo apt-get install -y ${{ matrix.c_compiler }} ${{ matrix.cxx_compiler }} cmake
+
+          - name: Configure CMake
+            run: |
+              cmake -B build \
+                -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+                -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
+                -DCMAKE_CXX_COMPILER=${{ matrix.cxx_compiler }} \
+                -DCMAKE_CXX_FLAGS="${{ matrix.extra_flags }}"
+
+          - name: Build Targets
+            run: cmake --build build -j$(nproc)
+
+          - name: Run Unit Tests (CTest)
+            run: |
+              cd build
+              ctest --output-on-failure
+
+          - name: Run Benchmarks (Sanity Check)
+            if: matrix.build_type == 'Release'
+            run: |
+              ./build/parser_benchmarks --benchmark_min_time=0.1s

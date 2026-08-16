@@ -28,25 +28,30 @@ void MacParser::process_payload(const uint8_t *payload_start,
 
     tlv_offset += sizeof(WiresharkTlvHeader) + length;
   }
-  std::cout << "MAC PDU starts at offset: " << tlv_offset << std::endl;
 
-  const uint8_t *mac_start = payload_start + tlv_offset + 9;
-  uint8_t first_byte = *mac_start;
-  uint8_t format = (first_byte & 0b01000000U) >> 6;
-  uint8_t reserve = (first_byte & 0b10000000U) >> 7;
-  first_byte &= 0b00111111U;
+  int subpdu_index = 0;
+  size_t mac_offset = tlv_offset + 9;
+  while (mac_offset < payload_size) {
+    const uint8_t *mac_start = payload_start + mac_offset;
+    MacSubheader mac_subheader(mac_start);
 
-  std::cout << static_cast<uint32_t>(first_byte) << std::endl
-            << static_cast<uint32_t>(format) << std::endl
-            << static_cast<uint32_t>(reserve) << std::endl;
-  uint8_t payload_length = mac_start[1];
-  std::cout << static_cast<uint32_t>(payload_length) << std::endl;
+    uint8_t lcid = mac_subheader.get_lcid();
+    uint16_t len = mac_subheader.get_length();
+    uint8_t mac_header_size = mac_subheader.get_header_size();
 
-  std::cout << "Hex Dump: ";
-  for (int i = 0; i < 16; i++) {
-    std::cout << std::hex << (unsigned)mac_start[i] << " ";
+    std::cout << "  [SubPDU " << subpdu_index++ << "] "
+              << "LCID: " << static_cast<uint32_t>(lcid)
+              << ", Payload Len: " << len
+              << ", Hdr Size: " << static_cast<uint32_t>(mac_header_size)
+              << " bytes" << '\n';
+
+    // If Padding (LCID 63), we reached the end of useful subPDUs
+    if (lcid == 63) {
+      std::cout << "  [Padding Detected - End of Transport Block]" << '\n';
+      break;
+    }
+    mac_offset += mac_header_size + len;
   }
-  std::cout << std::dec << std::endl;
 }
 
 void MacParser::parse() const {
@@ -54,9 +59,8 @@ void MacParser::parse() const {
   const PcapGlobalHeader *header =
       reinterpret_cast<const PcapGlobalHeader *>(m_data.data());
 
-  std::cout << "Magic Number: 0x" << std::hex << header->magic_number
-            << std::endl
-            << std::dec << "Link Type: " << header->link_type << std::endl;
+  std::cout << "Magic Number: 0x" << std::hex << header->magic_number << '\n'
+            << std::dec << "Link Type: " << header->link_type << '\n';
 
   size_t current_offset = 24;
   int packet_count = 0;
@@ -77,5 +81,5 @@ void MacParser::parse() const {
     process_payload(payload_ptr, record_header->captured_len);
   }
 
-  std::cout << "Packet Count: " << packet_count << std::endl;
+  std::cout << "Packet Count: " << packet_count << '\n';
 }
