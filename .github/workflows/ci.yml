@@ -1,12 +1,12 @@
 name: C++23 5G Fast Packet Parser CI
 
-    on:
-      push:
+on:
+    push:
         branches: [ main, master ]
-      pull_request:
+    pull_request:
         branches: [ main, master ]
 
-    jobs:
+jobs:
       build_and_test:
         name: ${{ matrix.name }}
         runs-on: ubuntu-24.04
