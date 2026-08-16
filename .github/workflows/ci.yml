@@ -56,4 +56,5 @@ jobs:
           - name: Run Benchmarks (Sanity Check)
             if: matrix.build_type == 'Release'
             run: |
+              cd build
               ./build/parser_benchmarks --benchmark_min_time=0.1s
